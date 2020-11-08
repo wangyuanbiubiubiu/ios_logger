@@ -55,7 +55,7 @@
     isRecording = false;
     isStarted = false;
     
-    bootTime =  [[NSDate date] timeIntervalSince1970] - [[NSProcessInfo processInfo] systemUptime];
+    bootTime =  0;//[[NSDate date] timeIntervalSince1970] - [[NSProcessInfo processInfo] systemUptime];
     
     reduseFpsInNTimes = 1;
     
@@ -187,7 +187,8 @@
     if (isRecording && gyrodata != nil)
     {
         double msDate = bootTime + gyrodata.timestamp;
-        [logStringGyro appendString: [NSString stringWithFormat:@"%f,%f,%f,%f\r\n",
+        [logStringGyro appendString: [NSString stringWithFormat:@"%f,%f,%f,%f,%f\r\n",
+                                      [[NSProcessInfo processInfo] systemUptime],
                                       msDate,
                                       gyrodata.rotationRate.x,
                                       gyrodata.rotationRate.y,
@@ -202,7 +203,8 @@
     if (isRecording && acceldata != nil)
     {
         double msDate = bootTime + acceldata.timestamp;
-        [logStringAccel appendString: [NSString stringWithFormat:@"%f,%f,%f,%f\r\n",
+        [logStringAccel appendString: [NSString stringWithFormat:@"%f,%f,%f,%f,%f\r\n",
+                                       [[NSProcessInfo processInfo] systemUptime],
                                        msDate,
                                        acceldata.acceleration.x, //G-units
                                        acceldata.acceleration.y,
@@ -215,7 +217,8 @@
     if (isRecording && magnetdata != nil)
     {
         double msDate = bootTime + magnetdata.timestamp;
-        [logStringMagnet appendString: [NSString stringWithFormat:@"%f,%f,%f,%f\r\n",
+        [logStringMagnet appendString: [NSString stringWithFormat:@"%f,%f,%f,%f,%f\r\n",
+                                       [[NSProcessInfo processInfo] systemUptime],
                                        msDate,
                                        magnetdata.magneticField.x, //microteslas
                                        magnetdata.magneticField.y,
@@ -230,8 +233,9 @@
         double msDate = bootTime + devmotdata.timestamp;
         
         CMQuaternion quat = devmotdata.attitude.quaternion;
-        [logStringMotion appendString: [NSString stringWithFormat:@"%f,%f,%f,%f,%f\r\n",
-                                       msDate,
+        [logStringMotion appendString: [NSString stringWithFormat:@"%f,%f,%f,%f,%f,%f\r\n",
+                                        [[NSProcessInfo processInfo] systemUptime],
+                                        msDate,
                                         quat.w,
                                         quat.x,
                                         quat.y,
@@ -240,8 +244,9 @@
         CMRotationRate rotr = devmotdata.rotationRate;
         CMAcceleration grav = devmotdata.gravity;
         CMAcceleration usracc = devmotdata.userAcceleration;
-        [logStringMotARH appendString: [NSString stringWithFormat:@"%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\r\n",
-                                       msDate,
+        [logStringMotARH appendString: [NSString stringWithFormat:@"%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\r\n",
+                                        [[NSProcessInfo processInfo] systemUptime],
+                                        msDate,
                                         rotr.x,
                                         rotr.y,
                                         rotr.z,
@@ -254,7 +259,8 @@
                                         devmotdata.heading]];
         
         CMCalibratedMagneticField calmagnfield = devmotdata.magneticField;
-        [logStringMotMagnFull appendString: [NSString stringWithFormat:@"%f,%f,%f,%f,%d\r\n",
+        [logStringMotMagnFull appendString: [NSString stringWithFormat:@"%f,%f,%f,%f,%f,%d\r\n",
+                                             [[NSProcessInfo processInfo] systemUptime],
                                        msDate,
                                         calmagnfield.field.x,
                                         calmagnfield.field.y,
@@ -286,7 +292,8 @@
         double currSpeed = location.speed;
         
         double msDate = [location.timestamp timeIntervalSince1970];
-        [logStringGps appendString: [NSString stringWithFormat:@"%f,%f,%f,%f,%f,%f,%ld,%f,%f\r\n",
+        [logStringGps appendString: [NSString stringWithFormat:@"%f,%f,%f,%f,%f,%f,%f,%ld,%f,%f\r\n",
+                                     [[NSProcessInfo processInfo] systemUptime],
                           msDate,
                           currLatitude,
                           currLongitude,
@@ -315,7 +322,8 @@
         double currHeadingAccuracy = heading.headingAccuracy;
         
         double msDate = [heading.timestamp timeIntervalSince1970];
-        [logStringHeading appendString: [NSString stringWithFormat:@"%f,%f,%f,%f\r\n",
+        [logStringHeading appendString: [NSString stringWithFormat:@"%f,%f,%f,%f,%f\r\n",
+                                         [[NSProcessInfo processInfo] systemUptime],
                           msDate,
                           currTrueHeading,
                           currMagneticHeading,
@@ -347,7 +355,9 @@
     {
         matrix_float3x3 camMat = frame.camera.intrinsics;
         [self processImage:frame.capturedImage Timestamp:msDate CameraMatrix:&camMat];
+    
     }
+    
     if(ireduceFps == (reduseFpsInNTimes-1))
         ireduceFps = 0;
     else
@@ -355,11 +365,14 @@
     
     simd_float4x4 trans = frame.camera.transform;
     simd_quatf quat = /*simd_normalize*/(simd_quaternion(trans));
-    [logStringArPose appendString: [NSString stringWithFormat:@"%f,%f,%f,%f,%f,%f,%f,%f\r\n",
+    [logStringArPose appendString: [NSString stringWithFormat:@"%f,%f,%d,%f,%f,%f,%f,%f,%f,%f\r\n",
+                                    [[NSProcessInfo processInfo] systemUptime],
                                     msDate,
+                                    frameNum - 1,
                                     trans.columns[3][0], trans.columns[3][1], trans.columns[3][2],
                                     quat.vector[3], quat.vector[0], quat.vector[1], quat.vector[2]
                                     ]];
+    
 }
 
 - (void)captureOutput:(AVCaptureOutput *)captureOutput
@@ -461,7 +474,8 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
             else
             {
                 if(camMat != nullptr){
-                    [logStringFrameStamps appendString: [NSString stringWithFormat:@"%f,%lu,%f,%f,%f,%f\r\n",
+                    [logStringFrameStamps appendString: [NSString stringWithFormat:@"%f,%f,%lu,%f,%f,%f,%f\r\n",
+                                                         [[NSProcessInfo processInfo] systemUptime],
                                                          msDate,
                                                          frameNum,
                                                          camMat->columns[0][0],

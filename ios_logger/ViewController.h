@@ -71,6 +71,16 @@
     AVAssetWriter *assetWriter;
     AVAssetWriterInput *assetWriterInput;
     AVAssetWriterInputPixelBufferAdaptor *assetWriterInputPixelBufferAdaptor;
+    
+    AVAssetWriter *assetDepthWriter;
+    AVAssetWriterInput *assetDepthWriterInput;
+    AVAssetWriterInputPixelBufferAdaptor *assetDepthWriterInputPixelBufferAdaptor;
+    
+    AVAssetWriter *assetConfidenceWriter;
+    AVAssetWriterInput *assetConfidenceWriterInput;
+    AVAssetWriterInputPixelBufferAdaptor *assetConfidenceWriterInputPixelBufferAdaptor;
+    
+    
     unsigned long frameNum;
     
     float lensPosition;
